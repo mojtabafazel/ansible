@@ -1,0 +1,22 @@
+all:
+  hosts:
+    lb:
+      ansible_host: 192.168.157.134
+    app1:
+      ansible_host: 192.168.157.144
+    app2:
+      ansible_host: 192.168.157.143
+    lb1:
+      ansible_host: 192.168.157.133
+#گر dns داشته باشیم نیازی به نوشتن آی \ی نیست و فقط با دی ان اس میتوان به هاست وصل شد
+app:
+  hosts:
+    app1:
+      ansible_host: 192.168.157.144
+    app2:
+      ansible_host: 192.168.157.143
+
+lb12:
+  hosts:
+    lb1:
+      ansible_host: 192.168.157.133
