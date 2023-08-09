@@ -1,0 +1,4 @@
+- name: default action on all hosts
+  hosts: all
+  roles:
+    - test.yml
