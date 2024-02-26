@@ -1,5 +1,358 @@
-- name: install git
-  apt:
-    name: git
+- name: create a directory in /home
+  file:
+    path: /home/testdir/test
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
+  tags: create_dir
+
+- name: ------ create file1 in /home/testdir ---------
+  file:
+    path: /home/testdir/file1
+    state: touch
+    owner: root
+    group: root
+    mode: 0644
+  tags: touch_file
+
+- set_fact: myvar=123
+
+- name: ------ show a message -----
+  debug:
+    msg: "hello from ansible"
+
+- name: ----- show myvar ----
+  debug:
+    msg: '{{myvar}}'
+  tags: show_var
+
+- name: --- show my var2 ----
+  debug:
+    msg: '{{myvar2}}'
+  tags: show_myvar2
+
+- name: --- show my var3 ----
+  debug:
+    msg: '{{myvar3}}'
+  tags: show_myvarnew
+
+- name: --- show my var4 ----
+  debug:
+    msg: '{{myvar4}}'
+  tags: show_myvarnew
+
+- name: --- show my name ----
+  debug:
+    msg: '{{person.name}}'
+  tags: show_name
+
+- name: ---- show users ----
+  debug:
+    msg: "{{user_list}}"
+  tags: user_list
+
+
+
+- name: --- show built in vars---
+  debug:
+    msg: '{{hostvars}}'
+  tags: show_builtin_vars   
+
+- name: ---- show my var ---
+  debug:
+    msg: '{{vars_new}}'
+  tags: myvars
+
+- name: ---- create file/home ---
+  file:
+    path: /home/ansible
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  tags: create_dir
+- name: --- create file/home/ansible --  
+  file:
+   path: /home/ansible/mojtaba
+   state: touch
+   owner: root
+   group: root
+   mode: 0605
+  tags: create_file
+
+- name: ----- ansible_system ----
+  debug:
+    msg: '{{ansible_system}}'
+  tags: ansible_system
+
+- name: ---- my script ---
+  script: script.sh
+  tags: myscript
+
+- name: ---- exam10 shell module ---
+  shell: cat < /home/ansible/script.sh 
+  register: var_1
+  tags: shell_module
+
+- name: ---- exam10 shell module ---
+  shell: ps -aux | grep ansible
+  register: var_2
+  tags: shell_module
+
+- name: ---- exam10 shell module ---
+  shell: curl www.google.com
+  register: var_3
+  tags: shell_module
+
+- name: --- shell module debug ---
+  debug:
+    msg: '{{var_1.stdout}}{{var_2}}{{var_3}}'
+  tags: shell_module
+- name: ---- group module ---
+  group:
+    name: devops
     state: present
-    update_cache: yes
+  tags: user_mod
+- name: --- user module ---
+  user:
+    name: mojtaba
+    state: present
+    group: devops
+    shell: bin/bash
+    password: 123
+  tags: user_mod
+
+- name: Install nginx (state=present is optional)
+  apt:
+    name: nginx
+    state: present
+  tags: install_app
+
+- name: copy nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    force: yes
+    backup: yes
+  tags: nginx_config
+
+- name: linine file module
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    insertafter: 'hi this is a new ginx config'
+    line: 'Hi this title chaned by linininfile module'
+  tags: line_file
+
+
+- name: replace module
+  replace:
+    path: /etc/nginx/nginx.conf
+    regexp: 'hi this is a new ginx config'
+    replace: 'changed this par'
+    backup: yes
+  tags: replace_file
+
+- name: archive Module
+  archive:
+    path: /home/ansible/*
+    dest: /opt/test.tar.gz
+    exclude_path: 
+      - /home/ansible/file4
+  tags: archive_test
+
+
+- name: ----- wait for module ----
+  wait_for:
+    timeout: 10
+  tags: wait_for_mod
+- name: --- after wait_for modile -----
+  debug:
+    msg: "Hello from ansible"
+  tags: wait_for_mod
+
+- name: ----wait for ---
+  wait_for: 
+    host: 192.168.10.130
+    port: 80
+    delay: 5
+    timeout: 30
+    state: started
+  tags: wait_80
+
+- name: --- port 80 is up ---
+  debug:
+    msg: "port 80 is avalible"
+  tags: wait_80
+
+- name: ---- ignore module ---
+  command: /bin/false
+  ignore_errors: yes
+  tags: ignore_error
+- name: ---- ignore errores ---
+  debug:
+    msg: "ignore shod"
+  tags: ignore_error
+ 
+- name: --- update akages----
+  apt:
+    state: latest
+    force_apt_get: yes
+  async: 7500
+  poll: 0
+  tags: async_mod
+    
+- name: --- next task ---
+  debug:
+    msg: "after async"
+  tags: async_mod 
+- name: ---- reboot remot machins---
+  shell: 'sleep 1 && reboot'
+  async: 1
+  poll: 0
+  ignore_errors: yes
+  tags: reboot_hosts
+- name: wait for connection
+  wait_for_connection:
+    timeout: 200
+    sleep: 5
+    delay: 5
+  tags: reboot_hosts
+- name: ---- after reboot -- 
+  debug:
+    msg: "after reboot"
+  tags: reboot_hosts
+
+- name: --- check nginx instalation---
+  shell: "apt-cache search nginx | grep nginx"
+  register: sh_out
+  tags: check_out
+- name: ----- check if nginx is installed---
+  debug:
+    msg: "nginx is installed"
+  when: "'nginx' in sh_out.stdout"
+  tags: check_out
+
+- name: ---- gather the apt pakage facts----
+  package_facts:
+    manager: auto
+  tags: cond2
+- name: ---- check if nginx is installed---
+  debug:
+    var: ansible_facts.packages['nginx'] 
+  tags: cond2
+- name: --- nginx is installed----
+  debug:
+    msg: "nginx is installed"
+  when: "'nginx' in ansible_facts.packages"
+  tags: cond2 
+
+- name: ---- check if backup path if defind---
+  pause:
+    prompt: "the backup path is not defind! please Enter the path"
+  register: backup_path
+  tags: cond3
+
+
+- name: ---create multiple user---
+  user:
+    name: '{{item}}'
+    state: present
+  loop: '{{user_list}}'
+  tags: user_loop
+
+- name: ---install tree and gcc---
+  apt:
+    name: '{{item.name}}'
+    state: '{{item.state}}'
+  with_items: 
+    - {name: 'tree' , state: 'latest'}
+    - {name: 'docker.io'  , state: 'absent'}
+  tags: loop_2
+
+- name: ----find a .txt files---
+  find:
+    path: /home
+    pattern: '*.txt , *.conf'
+    recurse: yes
+    file_type: file
+  tags: find_mod
+- name: find a text and conf ---
+  debug:
+    msg: "file find is"
+  tags: find_mod
+
+- name: ---install mariadb---
+  apt:
+    name: mariadb-server
+    state: present
+  tags: maria
+- name: ---create databases (nested loop) in mariadb---
+  mysql_db:
+    name: '{{item}}'
+    state: present
+    login_user: root
+    login_password: 1234
+  with_items:
+  - 'db1'
+  - 'db2'
+  - 'db3'
+  tags: maria
+- name: ---make 3 user in mariadb---
+  mysql_user:
+    name: '{{item}}'
+    state: present
+    password: 1234
+  with_items: 
+  - 'mojtaba'
+  - 'mahdi'
+  - 'hasan'
+  tags: maria
+- name: ---map users to db with nested loop---
+  mysql_user:
+    name: '{{item[0]}}'
+    priv: '{{item[1]}}.*.ALL'
+    append_privs: yes
+    login_user: root
+    password: 1234
+  with_nested:
+  - ['mojtaba','mahdi','hasan']
+  - ['db1','db2','db3']
+  tags: maria  
+
+- name: create project.yml
+  file:
+    path: "{{ansible_root}}/{{project_name}}"
+    state: touch
+  tags: create_prj
+- name: create project role---
+  file:
+    path: "{{ansible_root}}/roles/{{project_name}}"
+    state: directory
+  tags: create_prj
+- name: create 7 directory
+  file:
+    path: "{{ansible_root}}/role/{{project_name}}/{{item}}"
+    state: directory
+  loop:
+  - tasks
+  - vars
+  - templeates
+  - meta
+  - files
+  - defaults
+  - handlers
+  tags: create_prj
+- name: ---createmain.yml files---
+  file:
+    path: "{{ansible_root}}/role/{{project_name}}/{{item}}/main.yml"
+    state: touch
+  loop:
+    - tasks
+    - vars
+    - default
+    - handlers
+    - meta
+  tags: create_prj
